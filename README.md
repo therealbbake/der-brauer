@@ -1,2 +1,3 @@
 # der-brauer
-raspberry pi servcie for controling stages of brewing.
+install sricpt that will set up pi to run in kiosk mode with craftbeerpi
+
