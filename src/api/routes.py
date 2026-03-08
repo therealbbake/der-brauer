@@ -42,8 +42,12 @@ async def get_sensor_data() -> Dict[str, Any]:
 
 # Hardware Control Endpoints
 @router.post("/hardware/{device_id}/control")
-async def control_hardware_device(device_id: str, action: str, value: float = None):
+async def control_hardware_device(device_id: str, data: Dict[str, Any]):
     """Control hardware devices (heaters, pumps, etc.)"""
+    action = data.get('action')
+    if not action:
+        raise HTTPException(status_code=400, detail="Missing 'action' in request body")
+    value = data.get('value')
     try:
         if hardware_manager:
             return await hardware_manager.control_device(device_id, action, value)
@@ -151,6 +155,32 @@ async def set_temperature_alert(config: Dict[str, Any]):
     try:
         if brew_controller:
             return await brew_controller.set_temperature_alert(config)
+        raise HTTPException(status_code=503, detail="Brew controller not available")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Temperature Control Endpoints
+@router.post("/temperature/set")
+async def set_temperature(data: Dict[str, Any]):
+    """Set target temperature for a device"""
+    temperature = data.get("temperature")
+    device_id = data.get("device_id")
+    if temperature is None or not device_id:
+        raise HTTPException(status_code=400, detail="Missing 'temperature' or 'device_id'")
+    try:
+        if brew_controller:
+            return await brew_controller.set_target_temperature(temperature, device_id)
+        raise HTTPException(status_code=503, detail="Brew controller not available")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/temperature/stop")
+async def stop_temperature(data: Dict[str, Any] = {}):
+    """Stop temperature control for a device or all"""
+    device_id = data.get("device_id")
+    try:
+        if brew_controller:
+            return await brew_controller.stop_temperature_control(device_id)
         raise HTTPException(status_code=503, detail="Brew controller not available")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

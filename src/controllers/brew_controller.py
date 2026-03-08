@@ -40,7 +40,7 @@ class BrewController:
         self.timers: Dict[str, Timer] = {}
         self.temperature_alerts: Dict[str, TemperatureAlert] = {}
         self.current_status = "idle"
-        self.target_temperature = None
+        self.target_temperatures = {}  # device_id: target_temp
         self.brew_session_active = False
 
         # Start background monitoring task
@@ -67,7 +67,7 @@ class BrewController:
         return {
             "status": self.current_status,
             "temperature": primary_temp,
-            "target_temperature": self.target_temperature,
+            "target_temperatures": self.target_temperatures,
             "brew_session_active": self.brew_session_active,
             "active_timers": len([t for t in self.timers.values() if t.active]),
             "timestamp": time.time()
@@ -147,18 +147,14 @@ class BrewController:
         logger.info("Stopped brew session")
         return {"session_stopped": True}
 
-    async def set_target_temperature(self, temperature: float, device_id: str = None) -> Dict[str, Any]:
-        """Set target temperature for temperature control"""
-        self.target_temperature = temperature
-
-        # Basic on/off temperature control
-        if device_id:
-            # This would implement PID control in a real system
-            # For now, just basic hysteresis
-            await self._control_temperature(temperature, device_id)
-
-        logger.info(f"Set target temperature to {temperature}°C")
-        return {"target_temperature": temperature, "success": True}
+    async def set_target_temperature(self, temperature: float, device_id: str) -> Dict[str, Any]:
+        """Set target temperature for a specific device"""
+        if not device_id:
+            raise ValueError("device_id is required")
+        self.target_temperatures[device_id] = temperature
+        await self._control_temperature(temperature, device_id)
+        logger.info(f"Set target temperature to {temperature}°C for device {device_id}")
+        return {"device_id": device_id, "target_temperature": temperature, "success": True}
 
     async def _monitor_system(self):
         """Background monitoring task"""
@@ -166,6 +162,8 @@ class BrewController:
             try:
                 await self._check_timers()
                 await self._check_temperature_alerts()
+                for device_id, target_temp in list(self.target_temperatures.items()):
+                    await self._control_temperature(target_temp, device_id)
                 await asyncio.sleep(5)  # Check every 5 seconds
             except Exception as e:
                 logger.error(f"Monitoring error: {e}")
@@ -219,14 +217,17 @@ class BrewController:
         """Basic temperature control (placeholder for PID implementation)"""
         sensor_data = await self.hardware_manager.get_sensor_data()
 
-        # Find a temperature sensor
+        # Get the linked sensor for the device if available
+        device = self.hardware_manager.devices.get(heater_device_id)
+        sensor_id = device.linked_sensor_id if device and device.linked_sensor_id else None
+
         current_temp = None
-        for sensor_info in sensor_data.get("sensors", {}).values():
-            if sensor_info.get("unit") == "celsius":
-                current_temp = sensor_info.get("value")
-                break
+        if sensor_id and sensor_id in sensor_data.get("sensors", {}):
+            current_temp = sensor_data["sensors"][sensor_id].get("value")
 
         if current_temp is None:
+            logger.warning("No temperature reading available for control. shutting off device for safety")
+            await self.hardware_manager.control_device(heater_device_id, "off")
             return
 
         # Simple hysteresis control
@@ -238,6 +239,21 @@ class BrewController:
         elif current_temp > (target_temp + hysteresis):
             # Turn heater off
             await self.hardware_manager.control_device(heater_device_id, "off")
+
+    async def stop_temperature_control(self, device_id: str = None) -> Dict[str, Any]:
+        """Stop temperature control for a specific device or all devices"""
+        if device_id:
+            if device_id in self.target_temperatures:
+                await self.hardware_manager.control_device(device_id, "off")
+                del self.target_temperatures[device_id]
+                logger.info(f"Stopped temperature control for device {device_id}")
+            return {"device_id": device_id, "success": True}
+        else:
+            for dev_id in list(self.target_temperatures.keys()):
+                await self.hardware_manager.control_device(dev_id, "off")
+            self.target_temperatures.clear()
+            logger.info("Stopped temperature control for all devices")
+            return {"success": True}
 
     async def cleanup(self):
         """Cleanup resources"""

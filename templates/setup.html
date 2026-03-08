@@ -24,8 +24,9 @@
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h6>Configured Sensors</h6>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSensorModal">Add Sensor</button>
             </div>
             <div class="card-body">
                 <div id="sensors-list">
@@ -37,8 +38,9 @@
 
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h6>Configured Devices</h6>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addDeviceModal">Add Device</button>
             </div>
             <div class="card-body">
                 <div id="devices-list">
@@ -49,118 +51,6 @@
     </div>
 </div>
 
-<!-- Discover Sensors -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6>Discover Sensors</h6>
-                <small class="text-muted">Automatically find available W1 temperature sensors</small>
-            </div>
-            <div class="card-body">
-                <button class="btn btn-info mb-3" onclick="discoverSensors()">Discover W1 Sensors</button>
-                <div id="discovered-sensors" class="row" style="display: none;">
-                    <div class="col-12">
-                        <h6>Discovered Sensors:</h6>
-                        <div id="discovered-list" class="mb-3">
-                            <!-- Discovered sensors will be populated here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Sensor -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6>Add New Sensor</h6>
-            </div>
-            <div class="card-body">
-                <form id="sensor-form" class="row g-3">
-                    <div class="col-md-2">
-                        <label for="sensor-id" class="form-label">Sensor ID</label>
-                        <input type="text" class="form-control" id="sensor-id" placeholder="e.g., temp_mash">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="sensor-name" class="form-label">Display Name</label>
-                        <input type="text" class="form-control" id="sensor-name" placeholder="e.g., Mash Tun">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="sensor-nickname" class="form-label">Nickname</label>
-                        <input type="text" class="form-control" id="sensor-nickname" placeholder="e.g., Primary Mash">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="sensor-type" class="form-label">Type</label>
-                        <select class="form-select" id="sensor-type">
-                            <option value="temperature">Temperature</option>
-                            <option value="pressure">Pressure</option>
-                            <option value="flow">Flow</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="sensor-pin" class="form-label">GPIO Pin</label>
-                        <input type="number" class="form-control" id="sensor-pin" min="1" max="40" placeholder="4">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-primary w-100">Add Sensor</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Device -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6>Add New Device</h6>
-            </div>
-            <div class="card-body">
-                <form id="device-form" class="row g-3">
-                    <div class="col-md-2">
-                        <label for="device-id" class="form-label">Device ID</label>
-                        <input type="text" class="form-control" id="device-id" placeholder="e.g., heater_1">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="device-name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="device-name" placeholder="e.g., RIMS Heater">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="device-type" class="form-label">Type</label>
-                        <select class="form-select" id="device-type" onchange="toggleSensorLink()">
-                            <option value="heater">Heater</option>
-                            <option value="kettle">Kettle</option>
-                            <option value="fridge">Fridge</option>
-                            <option value="pump">Pump</option>
-                            <option value="valve">Valve</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="device-sensor" class="form-label" id="sensor-label" style="display: none;">Linked Sensor</label>
-                        <select class="form-select" id="device-sensor" style="display: none;">
-                            <option value="">Select sensor...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="device-pin" class="form-label">GPIO Pin</label>
-                        <input type="number" class="form-control" id="device-pin" min="1" max="40" placeholder="17">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-success w-100">Add Device</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Configuration Tips -->
 <div class="row mt-4">
@@ -188,6 +78,118 @@
                         </ul>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sensor Modal -->
+<div class="modal fade" id="addSensorModal" tabindex="-1" aria-labelledby="addSensorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSensorModalLabel">Add New Sensor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Discover Sensors -->
+                <div class="mb-4">
+                    <h6>Discover Sensors</h6>
+                    <small class="text-muted">Automatically find available W1 temperature sensors</small>
+                    <button class="btn btn-info mt-2 mb-3" onclick="discoverSensors()">Discover W1 Sensors</button>
+                    <div id="discovered-sensors" class="row" style="display: none;">
+                        <div class="col-12">
+                            <h6>Discovered Sensors:</h6>
+                            <div id="discovered-list" class="mb-3">
+                                <!-- Discovered sensors will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Sensor Form -->
+                <form id="sensor-form" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="sensor-id" class="form-label">Sensor ID</label>
+                        <input type="text" class="form-control" id="sensor-id" placeholder="e.g., temp_mash">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sensor-name" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="sensor-name" placeholder="e.g., Mash Tun">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sensor-nickname" class="form-label">Nickname</label>
+                        <input type="text" class="form-control" id="sensor-nickname" placeholder="e.g., Primary Mash">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sensor-type" class="form-label">Type</label>
+                        <select class="form-select" id="sensor-type">
+                            <option value="temperature">Temperature</option>
+                            <option value="pressure">Pressure</option>
+                            <option value="flow">Flow</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sensor-pin" class="form-label">GPIO Pin</label>
+                        <input type="number" class="form-control" id="sensor-pin" min="1" max="40" placeholder="4">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sensor-address" class="form-label">Address (optional)</label>
+                        <input type="text" class="form-control" id="sensor-address" placeholder="e.g., 28-00000xxxxx">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="sensor-form" class="btn btn-primary">Add Sensor</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Device Modal -->
+<div class="modal fade" id="addDeviceModal" tabindex="-1" aria-labelledby="addDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDeviceModalLabel">Add New Device</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="device-form" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="device-id" class="form-label">Device ID</label>
+                        <input type="text" class="form-control" id="device-id" placeholder="e.g., heater_1">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="device-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="device-name" placeholder="e.g., RIMS Heater">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="device-type" class="form-label">Type</label>
+                        <select class="form-select" id="device-type" onchange="toggleSensorLink()">
+                            <option value="heater">Heater</option>
+                            <option value="kettle">Kettle</option>
+                            <option value="fridge">Fridge</option>
+                            <option value="pump">Pump</option>
+                            <option value="valve">Valve</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="device-sensor" class="form-label" id="sensor-label" style="display: none;">Linked Sensor</label>
+                        <select class="form-select" id="device-sensor" style="display: none;">
+                            <option value="">Select sensor...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="device-pin" class="form-label">GPIO Pin</label>
+                        <input type="number" class="form-control" id="device-pin" min="1" max="40" placeholder="17">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="device-form" class="btn btn-success">Add Device</button>
             </div>
         </div>
     </div>
@@ -408,7 +410,6 @@ document.getElementById('sensor-form').addEventListener('submit', async (e) => {
     addSensor(sensorData);
 });
 
-// Helper function to add sensor
 async function addSensor(sensorData) {
     try {
         const response = await fetch('/api/v1/equipment/sensor', {
@@ -423,6 +424,7 @@ async function addSensor(sensorData) {
             document.getElementById('sensor-form').reset();
             loadEquipment();
             alert('Sensor added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addSensorModal')).hide();
         } else {
             const error = await response.json();
             alert('Error adding sensor: ' + (error.detail || 'Unknown error'));
@@ -464,6 +466,7 @@ document.getElementById('device-form').addEventListener('submit', async (e) => {
             toggleSensorLink(); // Reset sensor link visibility
             loadEquipment();
             alert('Device added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addDeviceModal')).hide();
         } else {
             const error = await response.json();
             alert('Error adding device: ' + (error.detail || 'Unknown error'));
@@ -474,10 +477,8 @@ document.getElementById('device-form').addEventListener('submit', async (e) => {
     }
 });
 
-// Edit sensor
 async function editSensor(sensorId) {
     try {
-        // Get current sensor data from the equipment list
         const response = await fetch('/api/v1/equipment');
         const data = await response.json();
 
@@ -487,23 +488,22 @@ async function editSensor(sensorId) {
             return;
         }
 
-        // Populate form with current values
         document.getElementById('sensor-id').value = sensor.id;
         document.getElementById('sensor-name').value = sensor.name;
         document.getElementById('sensor-nickname').value = sensor.nickname || '';
         document.getElementById('sensor-type').value = sensor.type;
         document.getElementById('sensor-pin').value = sensor.pin;
+        document.getElementById('sensor-address').value = sensor.address || '';
 
-        // Change form button to update
-        const submitBtn = document.querySelector('#sensor-form button[type="submit"]');
+        document.getElementById('addSensorModalLabel').textContent = 'Edit Sensor';
+        const submitBtn = document.querySelector('#addSensorModal .modal-footer button[type="submit"]');
         submitBtn.textContent = 'Update Sensor';
-        submitBtn.className = 'btn btn-warning w-100';
+        submitBtn.className = 'btn btn-warning';
 
-        // Store original submit handler and replace
         const originalHandler = sensorFormSubmitHandler;
         document.getElementById('sensor-form').removeEventListener('submit', originalHandler);
 
-        document.getElementById('sensor-form').addEventListener('submit', async (e) => {
+        const updateHandler = async (e) => {
             e.preventDefault();
 
             const sensorData = {
@@ -512,7 +512,7 @@ async function editSensor(sensorId) {
                 nickname: document.getElementById('sensor-nickname').value || null,
                 type: document.getElementById('sensor-type').value,
                 pin: parseInt(document.getElementById('sensor-pin').value),
-                address: sensor.address, // Keep existing address
+                address: document.getElementById('sensor-address').value || null,
                 enabled: sensor.enabled
             };
 
@@ -526,9 +526,13 @@ async function editSensor(sensorId) {
                 if (updateResponse.ok) {
                     document.getElementById('sensor-form').reset();
                     submitBtn.textContent = 'Add Sensor';
-                    submitBtn.className = 'btn btn-primary w-100';
+                    submitBtn.className = 'btn btn-primary';
+                    document.getElementById('addSensorModalLabel').textContent = 'Add New Sensor';
                     loadEquipment();
                     alert('Sensor updated successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('addSensorModal')).hide();
+                    document.getElementById('sensor-form').removeEventListener('submit', updateHandler);
+                    document.getElementById('sensor-form').addEventListener('submit', originalHandler);
                 } else {
                     const error = await updateResponse.json();
                     alert('Error updating sensor: ' + (error.detail || 'Unknown error'));
@@ -537,7 +541,12 @@ async function editSensor(sensorId) {
                 console.error('Error updating sensor:', error);
                 alert('Error updating sensor');
             }
-        });
+        };
+
+        document.getElementById('sensor-form').addEventListener('submit', updateHandler);
+
+        const modal = new bootstrap.Modal(document.getElementById('addSensorModal'));
+        modal.show();
 
     } catch (error) {
         console.error('Error loading sensor for editing:', error);
@@ -569,10 +578,8 @@ async function deleteSensor(sensorId, sensorName) {
     }
 }
 
-// Edit device
 async function editDevice(deviceId) {
     try {
-        // Get current device data from the equipment list
         const response = await fetch('/api/v1/equipment');
         const data = await response.json();
 
@@ -582,28 +589,25 @@ async function editDevice(deviceId) {
             return;
         }
 
-        // Populate form with current values
         document.getElementById('device-id').value = device.id;
         document.getElementById('device-name').value = device.name;
         document.getElementById('device-type').value = device.type;
         document.getElementById('device-pin').value = device.pin;
 
-        // Show/hide sensor link based on device type
         toggleSensorLink();
         if (device.linked_sensor_id) {
             document.getElementById('device-sensor').value = device.linked_sensor_id;
         }
 
-        // Change form button to update
-        const submitBtn = document.querySelector('#device-form button[type="submit"]');
+        document.getElementById('addDeviceModalLabel').textContent = 'Edit Device';
+        const submitBtn = document.querySelector('#addDeviceModal .modal-footer button[type="submit"]');
         submitBtn.textContent = 'Update Device';
-        submitBtn.className = 'btn btn-warning w-100';
+        submitBtn.className = 'btn btn-warning';
 
-        // Store original submit handler and replace
         const originalHandler = deviceFormSubmitHandler;
         document.getElementById('device-form').removeEventListener('submit', originalHandler);
 
-        document.getElementById('device-form').addEventListener('submit', async (e) => {
+        const updateHandler = async (e) => {
             e.preventDefault();
 
             const deviceData = {
@@ -625,10 +629,14 @@ async function editDevice(deviceId) {
                 if (updateResponse.ok) {
                     document.getElementById('device-form').reset();
                     submitBtn.textContent = 'Add Device';
-                    submitBtn.className = 'btn btn-success w-100';
-                    toggleSensorLink(); // Reset sensor link visibility
+                    submitBtn.className = 'btn btn-success';
+                    document.getElementById('addDeviceModalLabel').textContent = 'Add New Device';
+                    toggleSensorLink();
                     loadEquipment();
                     alert('Device updated successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('addDeviceModal')).hide();
+                    document.getElementById('device-form').removeEventListener('submit', updateHandler);
+                    document.getElementById('device-form').addEventListener('submit', originalHandler);
                 } else {
                     const error = await updateResponse.json();
                     alert('Error updating device: ' + (error.detail || 'Unknown error'));
@@ -637,7 +645,12 @@ async function editDevice(deviceId) {
                 console.error('Error updating device:', error);
                 alert('Error updating device');
             }
-        });
+        };
+
+        document.getElementById('device-form').addEventListener('submit', updateHandler);
+
+        const modal = new bootstrap.Modal(document.getElementById('addDeviceModal'));
+        modal.show();
 
     } catch (error) {
         console.error('Error loading device for editing:', error);
@@ -740,4 +753,4 @@ window.addEventListener('beforeunload', () => {
     if (equipmentInterval) clearInterval(equipmentInterval);
 });
 </script>
-{% endblock %}
+{% endblock %}</script>

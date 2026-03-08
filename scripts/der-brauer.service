@@ -1,0 +1,15 @@
+[Unit]
+Description=Der Brauer Brewing Control System
+After=network.target
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory={APPDIR}
+Environment="PATH={VENVDIR}/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart={VENVDIR}/bin/uvicorn --host 0.0.0.0 --port 8000 src.main:app
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

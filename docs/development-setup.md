@@ -17,6 +17,31 @@
 
 ## Installation Steps
 
+### Quick Install (Recommended for Raspberry Pi)
+For a faster setup on Raspberry Pi, use the provided install script after cloning the repository:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/therealbbake/der-brauer.git
+   cd der-brauer
+   ```
+
+2. Run the install script:
+   ```bash
+   sudo bash scripts/install.sh
+   ```
+
+This script will:
+- Update the system
+- Install required packages
+- Set up virtual environment
+- Install dependencies
+- Configure and enable systemd service
+- Create default .env file
+
+For manual installation, follow the steps below.
+
+
 ### 1. Raspberry Pi OS Setup
 ```bash
 # Download Raspberry Pi Imager from raspberrypi.com
@@ -107,11 +132,6 @@ Create `.env` file in project root:
 ```bash
 # Database
 DATABASE_URL=sqlite:///brewing.db
-
-# GPIO Pins (adjust for your setup)
-TEMP_SENSOR_PIN=4
-HEATER_RELAY_PIN=17
-PUMP_RELAY_PIN=27
 
 # API
 API_HOST=0.0.0.0

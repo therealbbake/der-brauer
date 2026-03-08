@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bootstrap-based responsive web UI with modern styling
 - Comprehensive API endpoints for all system functions
 - Environment variable configuration support
+- Continuous temperature monitoring and GPIO control with hysteresis
+- Support for multiple devices with independent temperature control
+- UI stop buttons for individual devices and global stop
+- New API endpoints for setting and stopping temperature control (/temperature/set, /temperature/stop)
 
 ### Changed
 - Enhanced MVP roadmap to focus on core UI components and hardware setup

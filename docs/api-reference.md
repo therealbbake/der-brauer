@@ -379,6 +379,53 @@ Set temperature alerting thresholds.
 }
 ```
 
+### Temperature Control
+
+#### POST /temperature/set
+Set target temperature for a device.
+
+**Request Body:**
+```json
+{
+  "temperature": 67.0,
+  "device_id": "heater_1"
+}
+```
+
+**Response:**
+```json
+{
+  "device_id": "heater_1",
+  "target_temperature": 67.0,
+  "success": true
+}
+```
+
+#### POST /temperature/stop
+Stop temperature control for a specific device or all devices.
+
+**Request Body (optional for specific device):**
+```json
+{
+  "device_id": "heater_1"
+}
+```
+
+**Response:**
+```json
+{
+  "device_id": "heater_1",
+  "success": true
+}
+```
+
+Or for all:
+```json
+{
+  "success": true
+}
+```
+
 ### System Control
 
 #### POST /system/shutdown

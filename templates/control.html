@@ -98,7 +98,10 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-success w-100">Set Temperature Control</button>
+                        <div class="btn-group w-100" role="group">
+                            <button type="submit" class="btn btn-success">Set Temperature Control</button>
+                            <button type="button" class="btn btn-warning" onclick="stopTemperatureControl()">Stop Control</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -269,6 +272,7 @@ function createDeviceCardContent(device) {
             <div class="text-center">
                 <span class="badge bg-${statusColor} fs-6">${statusText}</span>
                 ${linkedSensor ? `<br><small class="text-muted">Linked to: ${linkedSensor}</small>` : ''}
+                <button class="btn btn-sm btn-warning mt-2" onclick="stopDeviceTemperature('${deviceId}')">Stop Control</button>
             </div>
         `;
     } else if (deviceType === 'valve') {
@@ -343,21 +347,20 @@ async function controlDevice(deviceId, action) {
 
 async function setDeviceTemperature(deviceId, temperature) {
     try {
-        const response = await fetch(`/api/v1/hardware/${deviceId}/control`, {
+        const response = await fetch('/api/v1/temperature/set', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                action: 'set',
-                value: parseFloat(temperature)
+                temperature: parseFloat(temperature),
+                device_id: deviceId
             })
         });
 
         if (response.ok) {
-            // Refresh device list to show new state
             loadDevices();
-            DerBrauer.showAlert(`Temperature set to ${temperature}${DerBrauer.currentTemperatureUnit === 'celsius' ? '°C' : '°F'}`, 'success');
+            DerBrauer.showAlert(`Temperature control set to ${temperature}${DerBrauer.currentTemperatureUnit === 'celsius' ? '°C' : '°F'} for device ${deviceId}`, 'success');
         } else {
             const error = await response.json();
             DerBrauer.showAlert('Error setting temperature: ' + (error.detail || 'Unknown error'), 'error');
@@ -518,13 +521,84 @@ document.getElementById('temperature-form').addEventListener('submit', async (e)
     }
 
     try {
-        // This would need a proper temperature control endpoint
-        alert('Temperature control functionality to be implemented');
+        const response = await fetch('/api/v1/temperature/set', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                temperature: targetTemp,
+                device_id: heaterDevice
+            })
+        });
+
+        if (response.ok) {
+            DerBrauer.showAlert('Temperature control set successfully', 'success');
+            loadDevices();  // Refresh device states
+        } else {
+            const error = await response.json();
+            DerBrauer.showAlert('Error setting temperature: ' + (error.detail || 'Unknown error'), 'error');
+        }
     } catch (error) {
         console.error('Error setting temperature:', error);
-        alert('Error setting temperature control');
+        DerBrauer.showAlert('Error setting temperature control', 'error');
     }
 });
+
+async function stopTemperatureControl() {
+    if (!confirm('Are you sure you want to stop temperature control for all devices?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/temperature/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (response.ok) {
+            DerBrauer.showAlert('Temperature control stopped for all devices', 'success');
+            loadDevices();
+        } else {
+            const error = await response.json();
+            DerBrauer.showAlert('Error stopping temperature control: ' + (error.detail || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error stopping temperature control:', error);
+        DerBrauer.showAlert('Error stopping temperature control', 'error');
+    }
+}
+
+async function stopDeviceTemperature(deviceId) {
+    if (!confirm(`Are you sure you want to stop temperature control for device ${deviceId}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/temperature/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                device_id: deviceId
+            })
+        });
+
+        if (response.ok) {
+            DerBrauer.showAlert(`Temperature control stopped for device ${deviceId}`, 'success');
+            loadDevices();
+        } else {
+            const error = await response.json();
+            DerBrauer.showAlert('Error stopping temperature control: ' + (error.detail || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error stopping device temperature control:', error);
+        DerBrauer.showAlert('Error stopping temperature control', 'error');
+    }
+}
 
 document.getElementById('alert-form').addEventListener('submit', async (e) => {
     e.preventDefault();

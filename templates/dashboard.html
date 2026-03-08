@@ -104,10 +104,12 @@ let sensorsInterval;
 function initDashboard() {
     updateStatus();
     updateSensors();
+    loadTimers();
 
     // Update every 5 seconds
     statusInterval = setInterval(updateStatus, 5000);
     sensorsInterval = setInterval(updateSensors, 5000);
+    timersInterval = setInterval(loadTimers, 5000);
 }
 
 async function updateStatus() {
@@ -124,8 +126,42 @@ async function updateStatus() {
         // Update status alert color
         const statusAlert = document.getElementById('status-display');
         statusAlert.className = 'alert ' + getStatusAlertClass(data.status);
+
+        // Update timers from status if needed, but better to call loadTimers
     } catch (error) {
         console.error('Error updating status:', error);
+    }
+}
+
+async function loadTimers() {
+    try {
+        const response = await fetch('/api/v1/timers');
+        const data = await response.json();
+
+        const container = document.getElementById('timers-list');
+
+        if (data.timers && data.timers.length > 0) {
+            container.innerHTML = '';
+            data.timers.forEach(timer => {
+                const timerElement = document.createElement('div');
+                timerElement.className = 'mb-2 p-2 border rounded';
+                timerElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>${timer.name}</strong>
+                        <span class="badge bg-${timer.expired ? 'danger' : 'primary'}">
+                            ${Math.floor(timer.remaining_seconds / 60)}:${(timer.remaining_seconds % 60).toString().padStart(2, '0')}
+                        </span>
+                    </div>
+                    ${timer.expired ? '<small class="text-danger">EXPIRED</small>' : ''}
+                `;
+                container.appendChild(timerElement);
+            });
+        } else {
+            container.innerHTML = '<p class="text-muted">No active timers</p>';
+        }
+    } catch (error) {
+        console.error('Error loading timers:', error);
+        document.getElementById('timers-list').innerHTML = '<p class="text-danger">Error loading timers</p>';
     }
 }
 
@@ -212,6 +248,7 @@ document.addEventListener('DOMContentLoaded', initDashboard);
 window.addEventListener('beforeunload', () => {
     if (statusInterval) clearInterval(statusInterval);
     if (sensorsInterval) clearInterval(sensorsInterval);
+    if (timersInterval) clearInterval(timersInterval);
 });
 </script>
 {% endblock %}

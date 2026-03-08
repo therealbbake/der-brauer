@@ -41,6 +41,7 @@ Der Brauer follows a modular architecture designed for reliability, maintainabil
 - Handles brewing recipes and process automation
 - Manages sensor data collection and actuator control
 - Provides REST API for external communication
+- Continuous background monitoring for timers, alerts, and multi-device temperature control with hysteresis
 
 ### 2. Hardware Controllers
 - GPIO pin management for digital I/O
