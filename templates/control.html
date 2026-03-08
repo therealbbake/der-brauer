@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Control - Der Brauer{% endblock %}
+
+{% block content %}
+<!-- Emergency Stop Button -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h6 class="card-title text-danger">⚠️ Safety Controls</h6>
+                <button class="btn btn-danger btn-lg" onclick="emergencyStop()">
+                    <i class="fas fa-stop-circle"></i> EMERGENCY STOP - Kill All Devices
+                </button>
+                <p class="text-muted mt-2 mb-0">Immediately shuts down all heating elements and pumps</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Control Cards -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Device Control</h5>
+                <small class="text-muted">Manual control of brewing equipment</small>
+            </div>
+            <div class="card-body">
+                <div id="devices-container" class="row">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading devices...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timer Control Section -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6>Set Timer</h6>
+            </div>
+            <div class="card-body">
+                <form id="timer-form">
+                    <div class="mb-3">
+                        <label for="timer-name" class="form-label">Timer Name</label>
+                        <input type="text" class="form-control" id="timer-name" placeholder="e.g., Mash Timer">
+                    </div>
+                    <div class="mb-3">
+                        <label for="timer-duration" class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="timer-duration" min="1" max="480" value="60">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Set Timer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6>Active Timers</h6>
+            </div>
+            <div class="card-body">
+                <div id="active-timers">
+                    <p class="text-muted">No active timers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Temperature Control Section -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Temperature Control</h6>
+            </div>
+            <div class="card-body">
+                <form id="temperature-form" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="target-temp" class="form-label">Target Temperature (<span id="temp-unit-symbol">°C</span>)</label>
+                        <input type="number" class="form-control" id="target-temp" step="0.1" min="0" max="100" value="67.0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="heater-device" class="form-label">Heater Device</label>
+                        <select class="form-select" id="heater-device">
+                            <option value="">Select heater...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100">Set Temperature Control</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Temperature Alerts Section -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Temperature Alerts</h6>
+            </div>
+            <div class="card-body">
+                <form id="alert-form" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="alert-sensor" class="form-label">Sensor</label>
+                        <select class="form-select" id="alert-sensor">
+                            <option value="">Select sensor...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="min-temp" class="form-label">Min Temp (<span id="alert-temp-unit">°C</span>)</label>
+                        <input type="number" class="form-control" id="min-temp" step="0.1" placeholder="Optional">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="max-temp" class="form-label">Max Temp (<span id="alert-temp-unit-2">°C</span>)</label>
+                        <input type="number" class="form-control" id="max-temp" step="0.1" placeholder="Optional">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="alert-name" class="form-label">Alert Name</label>
+                        <input type="text" class="form-control" id="alert-name" placeholder="e.g., Mash temp alert">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-warning w-100">Set Alert</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Manual Control JavaScript
+let controlInterval;
+
+function initControlPanel() {
+    loadDevices();
+    loadSensors();
+    loadTimers();
+
+    // Update every 10 seconds
+    controlInterval = setInterval(() => {
+        loadDevices();
+        loadTimers();
+    }, 10000);
+}
+
+async function loadDevices() {
+    try {
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        const container = document.getElementById('devices-container');
+        const heaterSelect = document.getElementById('heater-device');
+
+        // Clear existing options except first
+        heaterSelect.innerHTML = '<option value="">Select heater...</option>';
+
+        if (data.devices && data.devices.length > 0) {
+            container.innerHTML = '';
+
+            data.devices.forEach(device => {
+                // Add to heater select if it's a temperature-controlled device
+                if (['heater', 'kettle', 'fridge'].includes(device.type)) {
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    option.textContent = device.name;
+                    heaterSelect.appendChild(option);
+                }
+
+                // Create device control card
+                const deviceCard = createDeviceCard(device);
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.appendChild(deviceCard);
+                container.appendChild(col);
+            });
+        } else {
+            container.innerHTML = '<div class="col-12"><p class="text-muted text-center">No devices configured. Go to Equipment Setup to add devices.</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading devices:', error);
+        document.getElementById('devices-container').innerHTML =
+            '<div class="col-12"><p class="text-danger text-center">Error loading devices</p></div>';
+    }
+}
+
+function createDeviceCard(device) {
+    const card = document.createElement('div');
+    card.className = 'card h-100';
+    card.innerHTML = createDeviceCardContent(device);
+    return card;
+}
+
+function createDeviceCardContent(device) {
+    const deviceType = device.type;
+    const deviceName = device.name;
+    const deviceId = device.id;
+    const currentState = device.state;
+    const linkedSensor = device.linked_sensor_id;
+
+    // Base card structure
+    let cardContent = `
+        <div class="card-header">
+            <h6 class="card-title mb-0">${deviceName}</h6>
+            <small class="text-muted">${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)} - Pin ${device.pin}</small>
+        </div>
+        <div class="card-body">
+    `;
+
+    // Device-specific controls
+    if (deviceType === 'pump') {
+        // Pump: Simple ON/OFF
+        cardContent += `
+            <div class="d-flex justify-content-center mb-3">
+                <div class="btn-group btn-group-lg" role="group">
+                    <button class="btn ${currentState ? 'btn-success active' : 'btn-outline-success'}"
+                            onclick="controlDevice('${deviceId}', 'on')">
+                        <i class="fas fa-play"></i> ON
+                    </button>
+                    <button class="btn ${!currentState ? 'btn-danger active' : 'btn-outline-danger'}"
+                            onclick="controlDevice('${deviceId}', 'off')">
+                        <i class="fas fa-stop"></i> OFF
+                    </button>
+                </div>
+            </div>
+            <div class="text-center">
+                <span class="badge ${currentState ? 'bg-success' : 'bg-secondary'} fs-6">
+                    ${currentState ? 'RUNNING' : 'STOPPED'}
+                </span>
+            </div>
+        `;
+    } else if (['heater', 'kettle', 'fridge'].includes(deviceType)) {
+        // Temperature-controlled devices: Set temperature
+        const deviceIcon = deviceType === 'heater' ? 'fa-fire' :
+                          deviceType === 'kettle' ? 'fa-mug-hot' : 'fa-snowflake';
+        const statusColor = currentState ? 'success' : 'secondary';
+        const statusText = currentState ? 'ACTIVE' : 'IDLE';
+
+        cardContent += `
+            <div class="text-center mb-3">
+                <i class="fas ${deviceIcon} fa-2x text-${statusColor}"></i>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Set Target Temperature</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="temp-${deviceId}"
+                           step="0.1" min="0" max="100" value="67.0"
+                           onchange="setDeviceTemperature('${deviceId}', this.value)">
+                    <span class="input-group-text" id="unit-${deviceId}">°C</span>
+                </div>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-${statusColor} fs-6">${statusText}</span>
+                ${linkedSensor ? `<br><small class="text-muted">Linked to: ${linkedSensor}</small>` : ''}
+            </div>
+        `;
+    } else if (deviceType === 'valve') {
+        // Valve: ON/OFF
+        cardContent += `
+            <div class="d-flex justify-content-center mb-3">
+                <div class="btn-group btn-group-lg" role="group">
+                    <button class="btn ${currentState ? 'btn-primary active' : 'btn-outline-primary'}"
+                            onclick="controlDevice('${deviceId}', 'on')">
+                        <i class="fas fa-tint"></i> OPEN
+                    </button>
+                    <button class="btn ${!currentState ? 'btn-secondary active' : 'btn-outline-secondary'}"
+                            onclick="controlDevice('${deviceId}', 'off')">
+                        <i class="fas fa-ban"></i> CLOSED
+                    </button>
+                </div>
+            </div>
+            <div class="text-center">
+                <span class="badge ${currentState ? 'bg-primary' : 'bg-secondary'} fs-6">
+                    ${currentState ? 'OPEN' : 'CLOSED'}
+                </span>
+            </div>
+        `;
+    } else {
+        // Generic device: ON/OFF
+        cardContent += `
+            <div class="d-flex justify-content-center mb-3">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-success ${currentState ? 'active' : ''}"
+                            onclick="controlDevice('${deviceId}', 'on')">ON</button>
+                    <button class="btn btn-danger ${!currentState ? 'active' : ''}"
+                            onclick="controlDevice('${deviceId}', 'off')">OFF</button>
+                </div>
+            </div>
+            <div class="text-center">
+                <span class="badge ${currentState ? 'bg-success' : 'bg-secondary'}">
+                    ${currentState ? 'ON' : 'OFF'}
+                </span>
+            </div>
+        `;
+    }
+
+    cardContent += `
+        </div>
+    `;
+
+    return cardContent;
+}
+
+async function controlDevice(deviceId, action) {
+    try {
+        const response = await fetch(`/api/v1/hardware/${deviceId}/control`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action })
+        });
+
+        if (response.ok) {
+            // Refresh device list
+            loadDevices();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error controlling device:', error);
+        alert('Error controlling device');
+    }
+}
+
+async function setDeviceTemperature(deviceId, temperature) {
+    try {
+        const response = await fetch(`/api/v1/hardware/${deviceId}/control`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'set',
+                value: parseFloat(temperature)
+            })
+        });
+
+        if (response.ok) {
+            // Refresh device list to show new state
+            loadDevices();
+            DerBrauer.showAlert(`Temperature set to ${temperature}${DerBrauer.currentTemperatureUnit === 'celsius' ? '°C' : '°F'}`, 'success');
+        } else {
+            const error = await response.json();
+            DerBrauer.showAlert('Error setting temperature: ' + (error.detail || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error setting device temperature:', error);
+        DerBrauer.showAlert('Error setting device temperature', 'error');
+    }
+}
+
+async function emergencyStop() {
+    if (!confirm('⚠️ EMERGENCY STOP - Are you sure?\n\nThis will immediately shut down ALL heating elements and pumps.\nThis action cannot be undone automatically.')) {
+        return;
+    }
+
+    try {
+        // Get all devices
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        if (data.devices && data.devices.length > 0) {
+            // Turn off all heaters, kettles, fridges, and pumps
+            const devicesToStop = data.devices.filter(device =>
+                ['heater', 'kettle', 'fridge', 'pump'].includes(device.type) && device.state
+            );
+
+            if (devicesToStop.length === 0) {
+                DerBrauer.showAlert('No active devices to stop', 'info');
+                return;
+            }
+
+            // Stop all devices in parallel
+            const stopPromises = devicesToStop.map(device =>
+                fetch(`/api/v1/hardware/${device.id}/control`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'off' })
+                })
+            );
+
+            const results = await Promise.allSettled(stopPromises);
+            const successfulStops = results.filter(result => result.status === 'fulfilled' && result.value.ok).length;
+
+            // Refresh device list
+            loadDevices();
+
+            DerBrauer.showAlert(`Emergency stop activated. ${successfulStops} devices shut down successfully.`, 'warning');
+        } else {
+            DerBrauer.showAlert('No devices configured', 'info');
+        }
+    } catch (error) {
+        console.error('Error during emergency stop:', error);
+        DerBrauer.showAlert('Error during emergency stop. Please manually shut down devices.', 'error');
+    }
+}
+
+async function loadSensors() {
+    try {
+        const response = await fetch('/api/v1/sensors');
+        const data = await response.json();
+
+        const select = document.getElementById('alert-sensor');
+        select.innerHTML = '<option value="">Select sensor...</option>';
+
+        if (data.sensors) {
+            Object.keys(data.sensors).forEach(sensorId => {
+                const sensor = data.sensors[sensorId];
+                const option = document.createElement('option');
+                option.value = sensorId;
+                option.textContent = sensor.name || sensorId;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading sensors:', error);
+    }
+}
+
+async function loadTimers() {
+    try {
+        const response = await fetch('/api/v1/timers');
+        const data = await response.json();
+
+        const container = document.getElementById('active-timers');
+
+        if (data.timers && data.timers.length > 0) {
+            container.innerHTML = '';
+            data.timers.forEach(timer => {
+                const timerElement = document.createElement('div');
+                timerElement.className = 'mb-2 p-2 border rounded';
+                timerElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>${timer.name}</strong>
+                        <span class="badge bg-${timer.expired ? 'danger' : 'primary'}">
+                            ${Math.floor(timer.remaining_seconds / 60)}:${(timer.remaining_seconds % 60).toString().padStart(2, '0')}
+                        </span>
+                    </div>
+                    ${timer.expired ? '<small class="text-danger">EXPIRED</small>' : ''}
+                `;
+                container.appendChild(timerElement);
+            });
+        } else {
+            container.innerHTML = '<p class="text-muted">No active timers</p>';
+        }
+    } catch (error) {
+        console.error('Error loading timers:', error);
+    }
+}
+
+// Form handlers
+document.getElementById('timer-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('timer-name').value;
+    const duration = parseInt(document.getElementById('timer-duration').value);
+
+    if (!name || !duration) {
+        alert('Please fill in all timer fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/timers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: 'timer_' + Date.now(),
+                name: name,
+                duration_minutes: duration,
+                start_immediately: true
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById('timer-form').reset();
+            loadTimers();
+        } else {
+            const error = await response.json();
+            alert('Error setting timer: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error setting timer:', error);
+        alert('Error setting timer');
+    }
+});
+
+document.getElementById('temperature-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const targetTemp = parseFloat(document.getElementById('target-temp').value);
+    const heaterDevice = document.getElementById('heater-device').value;
+
+    if (!heaterDevice) {
+        alert('Please select a heater device');
+        return;
+    }
+
+    try {
+        // This would need a proper temperature control endpoint
+        alert('Temperature control functionality to be implemented');
+    } catch (error) {
+        console.error('Error setting temperature:', error);
+        alert('Error setting temperature control');
+    }
+});
+
+document.getElementById('alert-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const sensorId = document.getElementById('alert-sensor').value;
+    const minTemp = document.getElementById('min-temp').value;
+    const maxTemp = document.getElementById('max-temp').value;
+    const name = document.getElementById('alert-name').value;
+
+    if (!sensorId || !name) {
+        alert('Please select a sensor and provide an alert name');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/alerts/temperature', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: 'alert_' + Date.now(),
+                sensor_id: sensorId,
+                min_threshold: minTemp ? parseFloat(minTemp) : null,
+                max_threshold: maxTemp ? parseFloat(maxTemp) : null,
+                enabled: true
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById('alert-form').reset();
+            alert('Temperature alert set successfully');
+        } else {
+            const error = await response.json();
+            alert('Error setting alert: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error setting alert:', error);
+        alert('Error setting temperature alert');
+    }
+});
+
+// Temperature unit refresh function (called when unit changes)
+window.refreshTemperatures = function() {
+    updateTemperatureUnitSymbols();
+};
+
+// Update temperature unit symbols on the page
+function updateTemperatureUnitSymbols() {
+    const unitSymbol = DerBrauer.currentTemperatureUnit === 'celsius' ? '°C' : '°F';
+
+    // Update temperature control form
+    const tempUnitSymbol = document.getElementById('temp-unit-symbol');
+    if (tempUnitSymbol) tempUnitSymbol.textContent = unitSymbol;
+
+    // Update temperature alert form
+    const alertTempUnit = document.getElementById('alert-temp-unit');
+    if (alertTempUnit) alertTempUnit.textContent = unitSymbol;
+
+    const alertTempUnit2 = document.getElementById('alert-temp-unit-2');
+    if (alertTempUnit2) alertTempUnit2.textContent = unitSymbol;
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initControlPanel();
+    updateTemperatureUnitSymbols(); // Set initial temperature units
+});
+
+// Cleanup intervals when page unloads
+window.addEventListener('beforeunload', () => {
+    if (controlInterval) clearInterval(controlInterval);
+});
+</script>
+{% endblock %}

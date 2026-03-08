@@ -1,0 +1,202 @@
+/* Der Brauer Custom Styles */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-online {
+    background-color: #28a745;
+}
+
+.status-offline {
+    background-color: #6c757d;
+}
+
+.status-error {
+    background-color: #dc3545;
+}
+
+/* Device control buttons */
+.device-control {
+    transition: all 0.2s ease;
+}
+
+.device-control:hover {
+    transform: scale(1.05);
+}
+
+.device-control.active {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+/* Sensor readings */
+.sensor-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.sensor-unit {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-left: 4px;
+}
+
+/* Temperature display */
+.temperature-display {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.temperature-target {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+/* Charts placeholder */
+.chart-placeholder {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Timer display */
+.timer-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.25rem;
+    font-weight: bold;
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 8px 16px;
+    border-radius: 0.375rem;
+    border: 2px solid #dee2e6;
+}
+
+/* Equipment setup */
+.equipment-item {
+    transition: all 0.2s ease;
+}
+
+.equipment-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+/* Form improvements */
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem !important;
+}
+
+.btn-group .btn:not(:last-child) {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.btn-group .btn:not(:first-child) {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* Loading spinner */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .temperature-display {
+        font-size: 2rem;
+    }
+
+    .card-body .row > div {
+        margin-bottom: 1rem;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+    }
+}
+
+/* Alert animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.alert-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Table improvements */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

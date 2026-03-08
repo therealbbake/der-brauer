@@ -55,6 +55,16 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+**Core Dependencies:**
+- `fastapi` - Modern async web framework
+- `uvicorn` - ASGI server for FastAPI
+- `jinja2` - Template engine for HTML rendering
+- `pydantic` - Data validation and serialization
+- `python-multipart` - Form data handling
+
+**Optional Dependencies (for Raspberry Pi):**
+- `RPi.GPIO` - GPIO control (installs automatically on Pi)
+
 ## Development Environment
 
 ### Local Development (Non-Pi)

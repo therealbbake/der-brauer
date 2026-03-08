@@ -10,6 +10,34 @@ Currently no authentication required (local network only). Future versions will 
 
 ## Endpoints
 
+### System Configuration
+
+#### GET /config/temperature-unit
+Get current temperature unit setting.
+
+**Response:**
+```json
+{
+  "temperature_unit": "celsius"
+}
+```
+
+#### PUT /config/temperature-unit
+Set temperature unit preference.
+
+**Request Body:**
+```json
+"fahrenheit"
+```
+
+**Response:**
+```json
+{
+  "temperature_unit": "fahrenheit",
+  "success": true
+}
+```
+
 ### Status and Monitoring
 
 #### GET /status
@@ -18,14 +46,12 @@ Get current brewing system status.
 **Response:**
 ```json
 {
-  "status": "idle|brewing|mashing|boiling|fermenting",
-  "temperature": 68.5,
-  "target_temperature": 67.0,
-  "pump_status": "on|off",
-  "heater_status": "on|off",
-  "current_recipe": "Pale Ale v1.0",
-  "stage_start_time": "2023-10-01T14:30:00Z",
-  "estimated_completion": "2023-10-01T18:30:00Z"
+  "status": "idle",
+  "temperature": 25.5,
+  "target_temperature": null,
+  "brew_session_active": false,
+  "active_timers": 0,
+  "timestamp": 1696182600.123
 }
 ```
 
@@ -35,22 +61,32 @@ Get real-time sensor data.
 **Response:**
 ```json
 {
-  "temperature_sensors": [
-    {
-      "id": "mash_tun",
+  "sensors": {
+    "temp_mash": {
       "value": 68.5,
       "unit": "celsius",
-      "timestamp": "2023-10-01T14:30:00Z"
-    },
-    {
-      "id": "ambient",
-      "value": 22.0,
-      "unit": "celsius",
-      "timestamp": "2023-10-01T14:30:00Z"
+      "timestamp": 1696182600.123,
+      "name": "Mash Tun"
     }
-  ],
-  "pressure_sensors": [],
-  "flow_sensors": []
+  }
+}
+```
+
+#### GET /sensors/discover
+Discover available W1 temperature sensors on the system.
+
+**Response:**
+```json
+{
+  "sensors": [
+    {
+      "id": "28-000000000001",
+      "address": "28-000000000001",
+      "type": "temperature",
+      "name": "W1 Sensor 000001",
+      "discovered": true
+    }
+  ]
 }
 ```
 
@@ -174,6 +210,175 @@ Resume a paused brewing session.
 #### GET /brewing/current
 Get current brewing session details.
 
+### Equipment Management
+
+#### GET /equipment
+Get current equipment configuration.
+
+**Response:**
+```json
+{
+  "sensors": [
+    {
+      "id": "temp_mash",
+      "name": "Mash Tun",
+      "nickname": "Primary Mash",
+      "type": "temperature",
+      "pin": 4,
+      "enabled": true
+    }
+  ],
+  "devices": [
+    {
+      "id": "heater_1",
+      "name": "RIMS Heater",
+      "type": "heater",
+      "pin": 17,
+      "enabled": true,
+      "linked_sensor_id": "temp_mash"
+    }
+  ]
+}
+```
+
+#### POST /equipment/sensor
+Add a new sensor.
+
+**Request Body:**
+```json
+{
+  "id": "temp_mash",
+  "name": "Mash Tun",
+  "nickname": "Primary Mash",
+  "type": "temperature",
+  "pin": 4,
+  "address": "28-000000000001",
+  "enabled": true
+}
+```
+
+**Response:**
+```json
+{
+  "sensor_id": "temp_mash",
+  "success": true
+}
+```
+
+#### POST /equipment/device
+Add a new controllable device.
+
+**Request Body:**
+```json
+{
+  "id": "heater_1",
+  "name": "RIMS Heater",
+  "type": "heater",
+  "pin": 17,
+  "linked_sensor_id": "temp_mash",
+  "enabled": true
+}
+```
+
+**Response:**
+```json
+{
+  "device_id": "heater_1",
+  "success": true
+}
+```
+
+### Hardware Control
+
+#### POST /hardware/{device_id}/control
+Control a hardware device.
+
+**Parameters:**
+- `device_id`: Device identifier
+
+**Request Body:**
+```json
+{
+  "action": "on",
+  "value": null
+}
+```
+
+**Response:**
+```json
+{
+  "device_id": "heater_1",
+  "action": "on",
+  "success": true
+}
+```
+
+### Timer Management
+
+#### POST /timers
+Set a brewing timer.
+
+**Request Body:**
+```json
+{
+  "id": "mash_timer",
+  "name": "Mash Timer",
+  "duration_minutes": 60,
+  "start_immediately": true
+}
+```
+
+**Response:**
+```json
+{
+  "timer_id": "mash_timer",
+  "success": true
+}
+```
+
+#### GET /timers
+Get all timers.
+
+**Response:**
+```json
+{
+  "timers": [
+    {
+      "id": "mash_timer",
+      "name": "Mash Timer",
+      "duration_minutes": 60,
+      "active": true,
+      "remaining_seconds": 3540,
+      "expired": false
+    }
+  ]
+}
+```
+
+### Alert Management
+
+#### POST /alerts/temperature
+Set temperature alerting thresholds.
+
+**Request Body:**
+```json
+{
+  "id": "temp_alert_1",
+  "sensor_id": "temp_mash",
+  "min_threshold": 60.0,
+  "max_threshold": 75.0,
+  "enabled": true
+}
+```
+
+**Response:**
+```json
+{
+  "alert_id": "temp_alert_1",
+  "success": true
+}
+```
+
 ### System Control
 
 #### POST /system/shutdown
@@ -181,27 +386,6 @@ Shutdown the brewing system safely.
 
 #### POST /system/restart
 Restart the brewing system.
-
-#### GET /system/config
-Get system configuration.
-
-#### PUT /system/config
-Update system configuration.
-
-**Request Body:**
-```json
-{
-  "gpio_pins": {
-    "heater": 17,
-    "pump": 27,
-    "temp_sensor": 4
-  },
-  "safety_limits": {
-    "max_temperature": 100.0,
-    "min_temperature": 0.0
-  }
-}
-```
 
 ## Error Responses
 All endpoints may return error responses in the following format:

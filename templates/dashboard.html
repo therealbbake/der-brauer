@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Der Brauer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Brew Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Current Status</label>
+                            <div class="alert alert-info" id="status-display">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Temperature</label>
+                            <h3 id="temperature-display">--°C</h3>
+                            <small class="text-muted">Target: <span id="target-temp">--°C</span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temperature Chart Placeholder -->
+                <div class="mb-3">
+                    <label class="form-label">Temperature History</label>
+                    <div id="temperature-chart" style="height: 200px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                        <div class="d-flex align-items-center justify-content-center h-100">
+                            <span class="text-muted">Chart will be implemented</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6>Active Timers</h6>
+            </div>
+            <div class="card-body">
+                <div id="timers-list">
+                    <p class="text-muted">No active timers</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary btn-sm mb-2" onclick="startBrew()">Start Brew</button>
+                <button class="btn btn-danger btn-sm mb-2" onclick="stopBrew()">Stop Brew</button>
+                <button class="btn btn-warning btn-sm" onclick="emergencyStop()">Emergency Stop</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sensor Data Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Sensor Readings</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="sensors-table">
+                        <thead>
+                            <tr>
+                                <th>Sensor</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-muted">Loading sensors...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dashboard JavaScript
+let statusInterval;
+let sensorsInterval;
+
+function initDashboard() {
+    updateStatus();
+    updateSensors();
+
+    // Update every 5 seconds
+    statusInterval = setInterval(updateStatus, 5000);
+    sensorsInterval = setInterval(updateSensors, 5000);
+}
+
+async function updateStatus() {
+    try {
+        const response = await fetch('/api/v1/status');
+        const data = await response.json();
+
+        document.getElementById('status-display').textContent = data.status || 'Unknown';
+        document.getElementById('temperature-display').textContent =
+            DerBrauer.formatTemperature(data.temperature);
+        document.getElementById('target-temp').textContent =
+            DerBrauer.formatTemperature(data.target_temperature);
+
+        // Update status alert color
+        const statusAlert = document.getElementById('status-display');
+        statusAlert.className = 'alert ' + getStatusAlertClass(data.status);
+    } catch (error) {
+        console.error('Error updating status:', error);
+    }
+}
+
+async function updateSensors() {
+    try {
+        const response = await fetch('/api/v1/sensors');
+        const data = await response.json();
+
+        const tbody = document.querySelector('#sensors-table tbody');
+        tbody.innerHTML = '';
+
+        if (data.sensors && Object.keys(data.sensors).length > 0) {
+            Object.values(data.sensors).forEach(sensor => {
+                const row = tbody.insertRow();
+                row.insertCell().textContent = sensor.name || 'Unknown';
+                // Use proper formatting for temperature values
+                let displayValue = '--';
+                if (sensor.value !== null && sensor.value !== undefined) {
+                    if (sensor.unit && sensor.unit.includes('celsius')) {
+                        displayValue = DerBrauer.formatTemperature(sensor.value, 'celsius');
+                    } else if (sensor.unit && sensor.unit.includes('fahrenheit')) {
+                        displayValue = DerBrauer.formatTemperature(sensor.value, 'fahrenheit');
+                    } else {
+                        displayValue = sensor.value.toFixed(2);
+                    }
+                }
+                row.insertCell().textContent = displayValue;
+                row.insertCell().textContent = sensor.unit || '';
+                row.insertCell().textContent = sensor.timestamp ?
+                    new Date(sensor.timestamp * 1000).toLocaleTimeString() : '--';
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No sensors configured</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error updating sensors:', error);
+    }
+}
+
+async function startBrew() {
+    if (confirm('Start brewing session?')) {
+        try {
+            // This would be implemented with a proper brew start endpoint
+            alert('Brew start functionality to be implemented');
+        } catch (error) {
+            console.error('Error starting brew:', error);
+        }
+    }
+}
+
+async function stopBrew() {
+    if (confirm('Stop brewing session?')) {
+        try {
+            // This would be implemented with a proper brew stop endpoint
+            alert('Brew stop functionality to be implemented');
+        } catch (error) {
+            console.error('Error stopping brew:', error);
+        }
+    }
+}
+
+function emergencyStop() {
+    if (confirm('EMERGENCY STOP - Are you sure? This will immediately shut down all systems.')) {
+        // Emergency stop logic
+        alert('Emergency stop activated');
+    }
+}
+
+function getStatusAlertClass(status) {
+    switch (status) {
+        case 'idle': return 'alert-secondary';
+        case 'brewing': return 'alert-success';
+        case 'mashing': return 'alert-info';
+        case 'boiling': return 'alert-warning';
+        case 'error': return 'alert-danger';
+        default: return 'alert-secondary';
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initDashboard);
+
+// Cleanup intervals when page unloads
+window.addEventListener('beforeunload', () => {
+    if (statusInterval) clearInterval(statusInterval);
+    if (sensorsInterval) clearInterval(sensorsInterval);
+});
+</script>
+{% endblock %}

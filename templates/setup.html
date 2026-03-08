@@ -1,0 +1,743 @@
+{% extends "base.html" %}
+
+{% block title %}Equipment Setup - Der Brauer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Equipment Configuration</h5>
+                <small class="text-muted">Configure sensors and controllable devices</small>
+            </div>
+            <div class="card-body">
+                <p class="text-info">
+                    <i class="fas fa-info-circle"></i>
+                    Equipment setup allows you to configure sensors (temperature, pressure, flow) and devices (heaters, pumps, valves) for your brewing system.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Equipment -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6>Configured Sensors</h6>
+            </div>
+            <div class="card-body">
+                <div id="sensors-list">
+                    <p class="text-muted">No sensors configured</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6>Configured Devices</h6>
+            </div>
+            <div class="card-body">
+                <div id="devices-list">
+                    <p class="text-muted">No devices configured</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Discover Sensors -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Discover Sensors</h6>
+                <small class="text-muted">Automatically find available W1 temperature sensors</small>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-info mb-3" onclick="discoverSensors()">Discover W1 Sensors</button>
+                <div id="discovered-sensors" class="row" style="display: none;">
+                    <div class="col-12">
+                        <h6>Discovered Sensors:</h6>
+                        <div id="discovered-list" class="mb-3">
+                            <!-- Discovered sensors will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sensor -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Add New Sensor</h6>
+            </div>
+            <div class="card-body">
+                <form id="sensor-form" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="sensor-id" class="form-label">Sensor ID</label>
+                        <input type="text" class="form-control" id="sensor-id" placeholder="e.g., temp_mash">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sensor-name" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="sensor-name" placeholder="e.g., Mash Tun">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sensor-nickname" class="form-label">Nickname</label>
+                        <input type="text" class="form-control" id="sensor-nickname" placeholder="e.g., Primary Mash">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sensor-type" class="form-label">Type</label>
+                        <select class="form-select" id="sensor-type">
+                            <option value="temperature">Temperature</option>
+                            <option value="pressure">Pressure</option>
+                            <option value="flow">Flow</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sensor-pin" class="form-label">GPIO Pin</label>
+                        <input type="number" class="form-control" id="sensor-pin" min="1" max="40" placeholder="4">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">Add Sensor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Device -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Add New Device</h6>
+            </div>
+            <div class="card-body">
+                <form id="device-form" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="device-id" class="form-label">Device ID</label>
+                        <input type="text" class="form-control" id="device-id" placeholder="e.g., heater_1">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="device-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="device-name" placeholder="e.g., RIMS Heater">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="device-type" class="form-label">Type</label>
+                        <select class="form-select" id="device-type" onchange="toggleSensorLink()">
+                            <option value="heater">Heater</option>
+                            <option value="kettle">Kettle</option>
+                            <option value="fridge">Fridge</option>
+                            <option value="pump">Pump</option>
+                            <option value="valve">Valve</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="device-sensor" class="form-label" id="sensor-label" style="display: none;">Linked Sensor</label>
+                        <select class="form-select" id="device-sensor" style="display: none;">
+                            <option value="">Select sensor...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="device-pin" class="form-label">GPIO Pin</label>
+                        <input type="number" class="form-control" id="device-pin" min="1" max="40" placeholder="17">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100">Add Device</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Tips -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Configuration Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Sensors</h6>
+                        <ul>
+                            <li><strong>Temperature:</strong> DS18B20 (1-Wire), GPIO pin 4 is common</li>
+                            <li><strong>Pressure:</strong> I2C sensors, specify hex address</li>
+                            <li><strong>Flow:</strong> GPIO interrupt pins for pulse counting</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Devices</h6>
+                        <ul>
+                            <li><strong>Heaters:</strong> Relay control, use GPIO pins 17, 27, 22</li>
+                            <li><strong>Pumps:</strong> Relay or direct control for circulation</li>
+                            <li><strong>Valves:</strong> Solenoid valves for liquid flow control</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Equipment Setup JavaScript
+let equipmentInterval;
+
+function initSetup() {
+    loadEquipment();
+
+    // Update every 15 seconds
+    equipmentInterval = setInterval(loadEquipment, 15000);
+}
+
+async function loadEquipment() {
+    try {
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        // Load sensors
+        const sensorsContainer = document.getElementById('sensors-list');
+        if (data.sensors && data.sensors.length > 0) {
+            sensorsContainer.innerHTML = '';
+            data.sensors.forEach(sensor => {
+                const sensorItem = document.createElement('div');
+                sensorItem.className = 'mb-2 p-2 border rounded';
+                sensorItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${sensor.name}</strong>
+                            <small class="text-muted ms-2">${sensor.type} - Pin ${sensor.pin}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-${sensor.enabled ? 'success' : 'secondary'} me-2">
+                                ${sensor.enabled ? 'Enabled' : 'Disabled'}
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editSensor('${sensor.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteSensor('${sensor.id}', '${sensor.name}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                sensorsContainer.appendChild(sensorItem);
+            });
+        } else {
+            sensorsContainer.innerHTML = '<p class="text-muted">No sensors configured</p>';
+        }
+
+        // Load devices
+        const devicesContainer = document.getElementById('devices-list');
+        if (data.devices && data.devices.length > 0) {
+            devicesContainer.innerHTML = '';
+            data.devices.forEach(device => {
+                const deviceItem = document.createElement('div');
+                deviceItem.className = 'mb-2 p-2 border rounded';
+                deviceItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${device.name}</strong>
+                            <small class="text-muted ms-2">${device.type} - Pin ${device.pin}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-${device.state ? 'success' : 'secondary'} me-2">
+                                ${device.state ? 'ON' : 'OFF'}
+                            </span>
+                            <span class="badge bg-${device.enabled ? 'info' : 'warning'} me-2">
+                                ${device.enabled ? 'Enabled' : 'Disabled'}
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editDevice('${device.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteDevice('${device.id}', '${device.name}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                devicesContainer.appendChild(deviceItem);
+            });
+        } else {
+            devicesContainer.innerHTML = '<p class="text-muted">No devices configured</p>';
+        }
+
+    } catch (error) {
+        console.error('Error loading equipment:', error);
+        document.getElementById('sensors-list').innerHTML = '<p class="text-danger">Error loading sensors</p>';
+        document.getElementById('devices-list').innerHTML = '<p class="text-danger">Error loading devices</p>';
+    }
+}
+
+// Sensor discovery
+async function discoverSensors() {
+    try {
+        const response = await fetch('/api/v1/sensors/discover');
+        const data = await response.json();
+
+        const container = document.getElementById('discovered-list');
+        container.innerHTML = '';
+
+        if (data.sensors && data.sensors.length > 0) {
+            data.sensors.forEach(sensor => {
+                const sensorCard = document.createElement('div');
+                sensorCard.className = 'card mb-3';
+                sensorCard.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">${sensor.name}</h6>
+                                <small class="text-muted">ID: ${sensor.id}</small>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="addDiscoveredSensor('${sensor.id}', '${sensor.address}', '${sensor.name}')">
+                                Add Sensor
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(sensorCard);
+            });
+        } else {
+            container.innerHTML = '<p class="text-muted">No sensors discovered</p>';
+        }
+
+        document.getElementById('discovered-sensors').style.display = 'block';
+    } catch (error) {
+        console.error('Error discovering sensors:', error);
+        alert('Error discovering sensors');
+    }
+}
+
+// Add discovered sensor with nickname prompt
+function addDiscoveredSensor(sensorId, address, defaultName) {
+    const nickname = prompt('Enter a nickname for this sensor (optional):', defaultName);
+    if (nickname === null) return; // User cancelled
+
+    const sensorData = {
+        id: sensorId,
+        name: defaultName,
+        nickname: nickname || null,
+        type: 'temperature',
+        pin: 4, // Default W1 pin
+        address: address,
+        enabled: true
+    };
+
+    // Use the same API call as manual sensor addition
+    addSensor(sensorData);
+}
+
+// Toggle sensor link field for temperature-controlled devices
+function toggleSensorLink() {
+    const deviceType = document.getElementById('device-type').value;
+    const sensorField = document.getElementById('device-sensor');
+    const sensorLabel = document.getElementById('sensor-label');
+
+    // Show sensor link for heater, kettle, fridge
+    if (['heater', 'kettle', 'fridge'].includes(deviceType)) {
+        sensorField.style.display = 'block';
+        sensorLabel.style.display = 'block';
+        loadSensorOptions();
+    } else {
+        sensorField.style.display = 'none';
+        sensorLabel.style.display = 'none';
+    }
+}
+
+// Load available sensors for device linking
+async function loadSensorOptions() {
+    try {
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        const select = document.getElementById('device-sensor');
+        select.innerHTML = '<option value="">Select sensor...</option>';
+
+        if (data.sensors && data.sensors.length > 0) {
+            data.sensors.forEach(sensor => {
+                const option = document.createElement('option');
+                option.value = sensor.id;
+                option.textContent = sensor.nickname || sensor.name || sensor.id;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading sensors for device linking:', error);
+    }
+}
+
+// Form handlers
+document.getElementById('sensor-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const sensorData = {
+        id: document.getElementById('sensor-id').value,
+        name: document.getElementById('sensor-name').value,
+        nickname: document.getElementById('sensor-nickname').value || null,
+        type: document.getElementById('sensor-type').value,
+        pin: parseInt(document.getElementById('sensor-pin').value),
+        address: document.getElementById('sensor-address').value || null,
+        enabled: true
+    };
+
+    if (!sensorData.id || !sensorData.name) {
+        alert('Please fill in sensor ID and display name');
+        return;
+    }
+
+    addSensor(sensorData);
+});
+
+// Helper function to add sensor
+async function addSensor(sensorData) {
+    try {
+        const response = await fetch('/api/v1/equipment/sensor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sensorData)
+        });
+
+        if (response.ok) {
+            document.getElementById('sensor-form').reset();
+            loadEquipment();
+            alert('Sensor added successfully');
+        } else {
+            const error = await response.json();
+            alert('Error adding sensor: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error adding sensor:', error);
+        alert('Error adding sensor');
+    }
+}
+
+document.getElementById('device-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const deviceData = {
+        id: document.getElementById('device-id').value,
+        name: document.getElementById('device-name').value,
+        type: document.getElementById('device-type').value,
+        pin: parseInt(document.getElementById('device-pin').value),
+        linked_sensor_id: document.getElementById('device-sensor').value || null,
+        enabled: true
+    };
+
+    if (!deviceData.id || !deviceData.name || !deviceData.pin) {
+        alert('Please fill in all required device fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/equipment/device', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(deviceData)
+        });
+
+        if (response.ok) {
+            document.getElementById('device-form').reset();
+            toggleSensorLink(); // Reset sensor link visibility
+            loadEquipment();
+            alert('Device added successfully');
+        } else {
+            const error = await response.json();
+            alert('Error adding device: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error adding device:', error);
+        alert('Error adding device');
+    }
+});
+
+// Edit sensor
+async function editSensor(sensorId) {
+    try {
+        // Get current sensor data from the equipment list
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        const sensor = data.sensors.find(s => s.id === sensorId);
+        if (!sensor) {
+            alert('Sensor not found');
+            return;
+        }
+
+        // Populate form with current values
+        document.getElementById('sensor-id').value = sensor.id;
+        document.getElementById('sensor-name').value = sensor.name;
+        document.getElementById('sensor-nickname').value = sensor.nickname || '';
+        document.getElementById('sensor-type').value = sensor.type;
+        document.getElementById('sensor-pin').value = sensor.pin;
+
+        // Change form button to update
+        const submitBtn = document.querySelector('#sensor-form button[type="submit"]');
+        submitBtn.textContent = 'Update Sensor';
+        submitBtn.className = 'btn btn-warning w-100';
+
+        // Store original submit handler and replace
+        const originalHandler = sensorFormSubmitHandler;
+        document.getElementById('sensor-form').removeEventListener('submit', originalHandler);
+
+        document.getElementById('sensor-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const sensorData = {
+                id: sensorId,
+                name: document.getElementById('sensor-name').value,
+                nickname: document.getElementById('sensor-nickname').value || null,
+                type: document.getElementById('sensor-type').value,
+                pin: parseInt(document.getElementById('sensor-pin').value),
+                address: sensor.address, // Keep existing address
+                enabled: sensor.enabled
+            };
+
+            try {
+                const updateResponse = await fetch(`/api/v1/equipment/sensor/${sensorId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sensorData)
+                });
+
+                if (updateResponse.ok) {
+                    document.getElementById('sensor-form').reset();
+                    submitBtn.textContent = 'Add Sensor';
+                    submitBtn.className = 'btn btn-primary w-100';
+                    loadEquipment();
+                    alert('Sensor updated successfully');
+                } else {
+                    const error = await updateResponse.json();
+                    alert('Error updating sensor: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating sensor:', error);
+                alert('Error updating sensor');
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading sensor for editing:', error);
+        alert('Error loading sensor data');
+    }
+}
+
+// Delete sensor
+async function deleteSensor(sensorId, sensorName) {
+    if (!confirm(`Are you sure you want to delete the sensor "${sensorName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/v1/equipment/sensor/${sensorId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            loadEquipment();
+            alert('Sensor deleted successfully');
+        } else {
+            const error = await response.json();
+            alert('Error deleting sensor: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error deleting sensor:', error);
+        alert('Error deleting sensor');
+    }
+}
+
+// Edit device
+async function editDevice(deviceId) {
+    try {
+        // Get current device data from the equipment list
+        const response = await fetch('/api/v1/equipment');
+        const data = await response.json();
+
+        const device = data.devices.find(d => d.id === deviceId);
+        if (!device) {
+            alert('Device not found');
+            return;
+        }
+
+        // Populate form with current values
+        document.getElementById('device-id').value = device.id;
+        document.getElementById('device-name').value = device.name;
+        document.getElementById('device-type').value = device.type;
+        document.getElementById('device-pin').value = device.pin;
+
+        // Show/hide sensor link based on device type
+        toggleSensorLink();
+        if (device.linked_sensor_id) {
+            document.getElementById('device-sensor').value = device.linked_sensor_id;
+        }
+
+        // Change form button to update
+        const submitBtn = document.querySelector('#device-form button[type="submit"]');
+        submitBtn.textContent = 'Update Device';
+        submitBtn.className = 'btn btn-warning w-100';
+
+        // Store original submit handler and replace
+        const originalHandler = deviceFormSubmitHandler;
+        document.getElementById('device-form').removeEventListener('submit', originalHandler);
+
+        document.getElementById('device-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const deviceData = {
+                id: deviceId,
+                name: document.getElementById('device-name').value,
+                type: document.getElementById('device-type').value,
+                pin: parseInt(document.getElementById('device-pin').value),
+                linked_sensor_id: document.getElementById('device-sensor').value || null,
+                enabled: device.enabled
+            };
+
+            try {
+                const updateResponse = await fetch(`/api/v1/equipment/device/${deviceId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(deviceData)
+                });
+
+                if (updateResponse.ok) {
+                    document.getElementById('device-form').reset();
+                    submitBtn.textContent = 'Add Device';
+                    submitBtn.className = 'btn btn-success w-100';
+                    toggleSensorLink(); // Reset sensor link visibility
+                    loadEquipment();
+                    alert('Device updated successfully');
+                } else {
+                    const error = await updateResponse.json();
+                    alert('Error updating device: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating device:', error);
+                alert('Error updating device');
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading device for editing:', error);
+        alert('Error loading device data');
+    }
+}
+
+// Delete device
+async function deleteDevice(deviceId, deviceName) {
+    if (!confirm(`Are you sure you want to delete the device "${deviceName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/v1/equipment/device/${deviceId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            loadEquipment();
+            alert('Device deleted successfully');
+        } else {
+            const error = await response.json();
+            alert('Error deleting device: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error deleting device:', error);
+        alert('Error deleting device');
+    }
+}
+
+// Store original form handlers for restoration
+const sensorFormSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    const sensorData = {
+        id: document.getElementById('sensor-id').value,
+        name: document.getElementById('sensor-name').value,
+        nickname: document.getElementById('sensor-nickname').value || null,
+        type: document.getElementById('sensor-type').value,
+        pin: parseInt(document.getElementById('sensor-pin').value),
+        address: document.getElementById('sensor-address').value || null,
+        enabled: true
+    };
+
+    if (!sensorData.id || !sensorData.name) {
+        alert('Please fill in sensor ID and display name');
+        return;
+    }
+
+    addSensor(sensorData);
+};
+
+const deviceFormSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    const deviceData = {
+        id: document.getElementById('device-id').value,
+        name: document.getElementById('device-name').value,
+        type: document.getElementById('device-type').value,
+        pin: parseInt(document.getElementById('device-pin').value),
+        linked_sensor_id: document.getElementById('device-sensor').value || null,
+        enabled: true
+    };
+
+    if (!deviceData.id || !deviceData.name || !deviceData.pin) {
+        alert('Please fill in all required device fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/equipment/device', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(deviceData)
+        });
+
+        if (response.ok) {
+            document.getElementById('device-form').reset();
+            toggleSensorLink(); // Reset sensor link visibility
+            loadEquipment();
+            alert('Device added successfully');
+        } else {
+            const error = await response.json();
+            alert('Error adding device: ' + (error.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error adding device:', error);
+        alert('Error adding device');
+    }
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initSetup);
+
+// Cleanup intervals when page unloads
+window.addEventListener('beforeunload', () => {
+    if (equipmentInterval) clearInterval(equipmentInterval);
+});
+</script>
+{% endblock %}

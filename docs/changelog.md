@@ -8,13 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project documentation structure
-- Project overview, architecture, and development setup guides
-- API reference documentation (planned endpoints)
-- Repository initialization with basic configuration
+- Complete FastAPI backend with async architecture
+- Hardware management system with GPIO control and sensor reading
+- Temperature unit support (Celsius/Fahrenheit) with real-time conversion
+- W1 sensor auto-discovery for DS18B20 temperature sensors
+- Sensor nickname system for user-friendly identification
+- Device-sensor linking for temperature-controlled equipment (Heater/Kettle/Fridge)
+- Real-time brewing monitoring dashboard with status display
+- Manual control panel for device operation and timer management
+- Equipment setup interface with sensor discovery and configuration
+- Temperature alerting system with configurable thresholds
+- Timer management for brewing stages
+- Bootstrap-based responsive web UI with modern styling
+- Comprehensive API endpoints for all system functions
+- Environment variable configuration support
 
 ### Changed
-- N/A
+- Enhanced MVP roadmap to focus on core UI components and hardware setup
+- Updated goals to include UI dashboard, manual controls, and temperature alerting
+- Improved architecture documentation with current system design
 
 ### Deprecated
 - N/A
